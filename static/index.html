@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TargetScope — Drug Target Discovery AI</title>
+<style>
+  :root {
+    --bg: #0a0e1a; --surface: #111827; --surface2: #1a2235; --border: #1e2d45;
+    --accent: #6366f1; --accent2: #818cf8; --accent-dim: rgba(99,102,241,0.12);
+    --green: #10b981; --amber: #f59e0b; --red: #ef4444; --purple: #a855f7;
+    --text: #e2e8f0; --muted: #64748b; --subtle: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
+
+  /* HEADER */
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .logo-text { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+  .logo-sub { font-size: 0.75rem; color: var(--muted); }
+  .badge { background: var(--accent-dim); border: 1px solid var(--accent); color: var(--accent2); font-size: 0.7rem; padding: 3px 10px; border-radius: 20px; }
+
+  /* MAIN LAYOUT */
+  .main { max-width: 1300px; margin: 0 auto; padding: 2rem; }
+
+  /* HERO */
+  .hero { text-align: center; padding: 3rem 0 2rem; }
+  .hero h1 { font-size: 2.4rem; font-weight: 800; background: linear-gradient(135deg, #6366f1, #a855f7, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.75rem; }
+  .hero p { color: var(--subtle); font-size: 1.05rem; max-width: 600px; margin: 0 auto 2rem; }
+
+  /* SEARCH BAR */
+  .search-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; }
+  .search-row { display: flex; gap: 1rem; margin-bottom: 1rem; }
+  .input-wrap { flex: 1; position: relative; }
+  .input-wrap label { display: block; font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  input, textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.95rem; padding: 10px 14px; outline: none; transition: border 0.2s; font-family: inherit; }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: none; height: 60px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .chip { background: var(--accent-dim); border: 1px solid var(--border); color: var(--subtle); font-size: 0.75rem; padding: 4px 12px; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
+  .chip:hover { border-color: var(--accent); color: var(--accent2); }
+  .btn-primary { background: linear-gradient(135deg, #6366f1, #7c3aed); border: none; border-radius: 10px; color: #fff; font-size: 0.95rem; font-weight: 600; padding: 12px 32px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* STATS ROW */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; text-align: center; }
+  .stat-val { font-size: 1.8rem; font-weight: 800; color: var(--accent2); }
+  .stat-label { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+
+  /* STATUS */
+  .status { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; display: none; }
+  .status.active { display: flex; align-items: center; gap: 12px; }
+  .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .status-text { color: var(--subtle); font-size: 0.9rem; }
+
+  /* RESULTS GRID */
+  .results { display: none; }
+  .results.active { display: block; }
+  .section-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 1rem; }
+
+  /* BIOLOGY SUMMARY */
+  .bio-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .bio-card h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent2); margin-bottom: 0.75rem; }
+  .bio-card p { color: var(--subtle); line-height: 1.7; font-size: 0.92rem; }
+
+  /* TWO COL */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+
+  /* TARGET CARDS */
+  .targets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .target-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; transition: border-color 0.2s; }
+  .target-card:hover { border-color: var(--accent); }
+  .target-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem; }
+  .target-symbol { font-size: 1.3rem; font-weight: 800; color: var(--text); }
+  .target-name { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .priority-badge { font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .priority-High { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+  .priority-Medium { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
+  .priority-Low { background: rgba(100,116,139,0.15); color: var(--muted); border: 1px solid rgba(100,116,139,0.3); }
+  .target-rationale { font-size: 0.85rem; color: var(--subtle); line-height: 1.6; margin-bottom: 1rem; }
+  .target-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+  .meta-tag { font-size: 0.7rem; padding: 3px 8px; border-radius: 6px; }
+  .tag-pathway { background: rgba(99,102,241,0.12); color: var(--accent2); }
+  .tag-novelty { background: rgba(168,85,247,0.12); color: var(--purple); }
+  .tag-drug { background: rgba(6,182,212,0.12); color: #06b6d4; }
+  .tag-score { background: rgba(16,185,129,0.12); color: var(--green); }
+
+  /* PANELS */
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+  .panel h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 1rem; }
+  .pill-list { display: flex; flex-direction: column; gap: 8px; }
+  .pill-item { background: var(--surface2); border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; color: var(--subtle); border-left: 3px solid var(--accent); line-height: 1.5; }
+  .pathway-pill { border-left-color: var(--purple); }
+  .gap-pill { border-left-color: var(--amber); }
+
+  /* LANDSCAPE */
+  .landscape-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1.5rem; }
+  .confidence-ring { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+  .confidence-ring svg { transform: rotate(-90deg); }
+  .confidence-ring .ring-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; color: var(--accent2); }
+  .landscape-text h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+  .landscape-text p { font-size: 0.85rem; color: var(--subtle); line-height: 1.6; }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+  .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+  @media (max-width: 768px) {
+    .search-row { flex-direction: column; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .two-col { grid-template-columns: 1fr; }
+    .targets-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🎯</div>
+    <div>
+      <div class="logo-text">TargetScope</div>
+      <div class="logo-sub">Drug Target Discovery AI · OpenTargets + PubMed</div>
+    </div>
+  </div>
+  <div class="badge">● Llama 3.3 · Free · No login</div>
+</div>
+
+<div class="main">
+  <div class="hero">
+    <h1>Discover Drug Targets with AI</h1>
+    <p>Enter any disease or condition. TargetScope mines OpenTargets, PubMed, and pathway databases to surface high-priority drug targets — ranked, explained, and ready to act on.</p>
+  </div>
+
+  <div class="search-box">
+    <div class="search-row">
+      <div class="input-wrap" style="flex:2">
+        <label>Disease / Condition</label>
+        <input id="diseaseInput" type="text" placeholder="e.g. Systemic lupus erythematosus, Parkinson's disease, Type 2 diabetes..."/>
+      </div>
+      <div class="input-wrap" style="flex:2">
+        <label>Research Context (optional)</label>
+        <input id="contextInput" type="text" placeholder="e.g. focus on neuroinflammation, kinase targets only..."/>
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="btn-primary" id="searchBtn" onclick="runSearch()">Discover Targets →</button>
+      </div>
+    </div>
+    <div class="chips">
+      <span style="font-size:0.72rem;color:var(--muted);margin-right:4px;">Try:</span>
+      <span class="chip" onclick="setDisease('Systemic lupus erythematosus')">Lupus (SLE)</span>
+      <span class="chip" onclick="setDisease('Rheumatoid arthritis')">Rheumatoid Arthritis</span>
+      <span class="chip" onclick="setDisease('Alzheimer disease')">Alzheimer's</span>
+      <span class="chip" onclick="setDisease('Non-small cell lung carcinoma')">Lung Cancer</span>
+      <span class="chip" onclick="setDisease('Type 2 diabetes mellitus')">Type 2 Diabetes</span>
+      <span class="chip" onclick="setDisease('Crohn disease')">Crohn's Disease</span>
+      <span class="chip" onclick="setDisease('Amyotrophic lateral sclerosis')">ALS</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val">60K+</div><div class="stat-label">Diseases in OpenTargets</div></div>
+    <div class="stat"><div class="stat-val">35M+</div><div class="stat-label">PubMed Papers</div></div>
+    <div class="stat"><div class="stat-val">20K+</div><div class="stat-label">Human Gene Targets</div></div>
+    <div class="stat"><div class="stat-val">$0</div><div class="stat-label">Cost to Use</div></div>
+  </div>
+
+  <div class="status" id="statusBar">
+    <div class="spinner"></div>
+    <span class="status-text" id="statusText">Querying OpenTargets database...</span>
+  </div>
+
+  <div class="results" id="results">
+    <!-- filled by JS -->
+  </div>
+
+  <div class="empty" id="emptyState">
+    <div class="empty-icon">🔬</div>
+    <div style="font-size:1rem;color:var(--subtle);margin-bottom:0.5rem;">Enter a disease to discover targets</div>
+    <div style="font-size:0.85rem;">TargetScope pulls real association data from OpenTargets and synthesises it with AI</div>
+  </div>
+</div>
+
+<script>
+function setDisease(d) {
+  document.getElementById('diseaseInput').value = d;
+  document.getElementById('diseaseInput').focus();
+}
+
+function setStatus(msg) {
+  document.getElementById('statusBar').classList.add('active');
+  document.getElementById('statusText').textContent = msg;
+}
+function hideStatus() { document.getElementById('statusBar').classList.remove('active'); }
+
+function priorityColor(p) {
+  if (p === 'High') return '#10b981';
+  if (p === 'Medium') return '#f59e0b';
+  return '#64748b';
+}
+
+function drawRing(conf) {
+  const r = 32, circ = 2 * Math.PI * r;
+  const fill = (conf / 100) * circ;
+  return `<svg width="80" height="80" viewBox="0 0 80 80">
+    <circle cx="40" cy="40" r="${r}" fill="none" stroke="#1e2d45" stroke-width="8"/>
+    <circle cx="40" cy="40" r="${r}" fill="none" stroke="#6366f1" stroke-width="8"
+      stroke-dasharray="${fill} ${circ}" stroke-linecap="round"/>
+  </svg>`;
+}
+
+async function runSearch() {
+  const disease = document.getElementById('diseaseInput').value.trim();
+  if (!disease) { alert('Please enter a disease or condition.'); return; }
+  const context = document.getElementById('contextInput').value.trim();
+  const btn = document.getElementById('searchBtn');
+  btn.disabled = true;
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('results').classList.remove('active');
+
+  try {
+    // Step 1: OpenTargets
+    setStatus('Querying OpenTargets database for disease-target associations...');
+    const otResp = await fetch(`/opentargets?disease=${encodeURIComponent(disease)}`);
+    const otData = await otResp.json();
+
+    // Step 2: PubMed
+    setStatus('Searching PubMed for recent target discovery literature...');
+    const pmResp = await fetch(`/pubmed-targets?disease=${encodeURIComponent(disease)}`);
+    const pmData = await pmResp.json();
+
+    // Step 3: AI Analysis
+    setStatus('AI synthesising target landscape and prioritising candidates...');
+    const aiResp = await fetch('/analyze', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ disease: otData.disease_name || disease, targets: otData.targets || [], papers: pmData || [], context })
+    });
+    const aiData = await aiResp.json();
+
+    hideStatus();
+    if (aiData.error) { alert('Analysis error: ' + aiData.error); btn.disabled = false; return; }
+    renderResults(disease, otData, pmData, aiData);
+  } catch(e) {
+    hideStatus();
+    alert('Error: ' + e.message);
+  }
+  btn.disabled = false;
+}
+
+function renderResults(disease, otData, pmData, ai) {
+  const res = document.getElementById('results');
+  const targets = ai.top_targets || [];
+  const pathways = ai.key_pathways || [];
+  const combos = ai.high_value_combinations || [];
+  const conf = ai.confidence || 0;
+
+  res.innerHTML = `
+    <div class="bio-card">
+      <h3>🧬 Disease Biology — ${otData.disease_name || disease}</h3>
+      <p>${ai.disease_biology_summary || ''}</p>
+    </div>
+
+    <div class="landscape-card">
+      <div class="confidence-ring">
+        ${drawRing(conf)}
+        <div class="ring-val">${conf}</div>
+      </div>
+      <div class="landscape-text">
+        <h4>Target Landscape · <span style="color:var(--accent2)">${ai.data_richness || ''} Data</span></h4>
+        <p>${ai.target_landscape || ''}</p>
+        <p style="margin-top:0.5rem;color:var(--amber)">${ai.gaps_and_opportunities || ''}</p>
+      </div>
+    </div>
+
+    <p class="section-title">${targets.length} Prioritised Targets</p>
+    <div class="targets-grid">
+      ${targets.map(t => `
+        <div class="target-card">
+          <div class="target-header">
+            <div>
+              <div class="target-symbol">${t.symbol}</div>
+              <div class="target-name">${t.name}</div>
+            </div>
+            <span class="priority-badge priority-${t.priority}">${t.priority}</span>
+          </div>
+          <div class="target-rationale">${t.rationale}</div>
+          <div class="target-meta">
+            <span class="meta-tag tag-pathway">⚡ ${t.pathway}</span>
+            <span class="meta-tag tag-novelty">✦ ${t.novelty}</span>
+            <span class="meta-tag tag-drug">💊 ${t.therapeutic_modality}</span>
+            <span class="meta-tag tag-score">🎯 ${t.druggability} druggability</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <h3>🔄 Key Biological Pathways</h3>
+        <div class="pill-list">
+          ${pathways.map(p => `<div class="pill-item pathway-pill">${p}</div>`).join('')}
+        </div>
+      </div>
+      <div class="panel">
+        <h3>⚡ High-Value Target Combinations</h3>
+        <div class="pill-list">
+          ${combos.map(c => `<div class="pill-item gap-pill">${c}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    ${pmData && pmData.length > 0 ? `
+    <div class="panel" style="margin-bottom:1.5rem">
+      <h3>📄 Recent Literature (${pmData.length} papers)</h3>
+      <div class="pill-list">
+        ${pmData.slice(0,5).map(p => `<div class="pill-item">${p.title} ${p.year ? '(' + p.year + ')' : ''}</div>`).join('')}
+      </div>
+    </div>` : ''}
+  `;
+  res.classList.add('active');
+  res.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('diseaseInput').addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+</script>
+</body>
+</html>
